@@ -59,8 +59,17 @@ public class CharacterController {
     }
 
     @DeleteMapping("/characters/{id}")
-    public Character deleteCharacter(@PathVariable int id) {
-        return
+    public List <Character> deleteCharacter(@PathVariable int id) {
+        Character character = listCharacter
+                .stream()
+                .filter(x-> id == x.getId())
+                .findFirst()
+                .orElse(null);
+        if(character == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        listCharacter.remove(character);
+        return listCharacter;
     }
 
     @GetMapping("/characters/{id}")
