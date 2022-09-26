@@ -1,8 +1,11 @@
 package com.exampledononsanddragons.restservice.DonjonsAndDragonsRestApp.web.controller;
 
 import com.exampledononsanddragons.restservice.DonjonsAndDragonsRestApp.model.Character;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -30,7 +33,7 @@ public class CharacterController {
         return listCharacter;
     }
 
-    @PostMapping("/characters")
+    @PostMapping(value = "/characters")
     public List<Character> saveCharacter(@RequestBody Character character) {
         int id = character.getId();
         String name = character.getName();
@@ -54,7 +57,8 @@ public class CharacterController {
         characterUpdated.setName(character.getName());
         characterUpdated.setType(character.getType());
         characterUpdated.setLifepoints(character.getLifepoints());
-        characterUpdated.setImage(character.getImage());
+        characterUpdated.setImage(character.getName());
+        System.out.println(character);
         return character;
     }
 
