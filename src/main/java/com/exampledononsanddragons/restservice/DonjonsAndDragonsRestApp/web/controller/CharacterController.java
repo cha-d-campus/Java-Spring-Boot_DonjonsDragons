@@ -2,18 +2,22 @@ package com.exampledononsanddragons.restservice.DonjonsAndDragonsRestApp.web.con
 
 import com.exampledononsanddragons.restservice.DonjonsAndDragonsRestApp.model.Character;
 import com.exampledononsanddragons.restservice.DonjonsAndDragonsRestApp.web.dao.CharacterDao;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.net.URI;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -35,21 +39,61 @@ public class CharacterController {
         this.characterDao = characterDao;
     }
 
+    // Récupérer la liste des personnages
     @GetMapping("/characters")
-    public List <Character> listCharacters() {
-        return characterDao.findAll();
+    public MappingJacksonValue listCharacters() {
+//        Iterable<Character> characters = characterDao.findAll();
+//
+//        SimpleBeanPropertyFilter fitlerByType = SimpleBeanPropertyFilter.serializeAllExcept("lifepoints");
+//
+//        FilterProvider listFilters = new SimpleFilterProvider().addFilter("monFiltreDynamique", fitlerByType);
+//
+//        MappingJacksonValue charactersFilters = new MappingJacksonValue(characters);
+//
+//        charactersFilters.setFilters(listFilters);
+//
+//        return charactersFilters;
+        Iterable<Character> characters = characterDao.findAll();
+        MappingJacksonValue characterList = new MappingJacksonValue(characters);
+        return characterList;
     }
 
-    @PostMapping(value = "/characters")
-    public List<Character> saveCharacter(@RequestBody Character character) {
-        int id = character.getId();
-        String name = character.getName();
-        String type = character.getType();
-        int lifepoints = character.getLifepoints();
-        String image = character.getImage();
-        characterDao.findAll().add(new Character(id, name, type, lifepoints,image));
-    return characterDao.findAll();
+    //Récupérer un personnage par son ID
+    @GetMapping("/characters/{id}")
+    public Character displayACharacter(@PathVariable int id) {
+//        List<Character> characters = listCharacter
+//                .stream()
+//                .filter(x -> id == x.getId())
+//                .toList();
+        if(characterDao.findAll().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        return characterDao.findById(id);
     }
+
+    //Ajouter un personnage
+    @PostMapping(value = "/characters")
+    public ResponseEntity<Void> saveCharacter(@RequestBody Character character) {
+//        int id = character.getId();
+//        String name = character.getName();
+//        String type = character.getType();
+//        int lifepoints = character.getLifepoints();
+//        String image = character.getImage();
+//        characterDao.findAll().add(new Character(id, name, type, lifepoints,image));
+//    return characterDao.findAll();
+        Character characterAdded = characterDao.save(character);
+
+        if (characterAdded == null)
+            return ResponseEntity.noContent().build();
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(characterAdded.getId())
+                .toUri();
+        return ResponseEntity.created(location).build();
+    }
+
+    //Mettre à jour un personnage
     @PutMapping("/characters")
     public Character editCharacter(@RequestBody Character character) {
 //        Optional <Character> characterOptional = listCharacter
@@ -57,21 +101,24 @@ public class CharacterController {
 //                .filter(x -> character.getId() == x.getId())
 //                .findFirst();
 
-        Optional <Character> characterOptional = Optional.ofNullable(characterDao
-                .findById(character.getId()));
+//        Optional <Character> characterOptional = Optional.ofNullable(characterDao
+//                .findById(character.getId()));
+//
+//        if(!characterOptional.isPresent()) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+//        }
+//        Character characterUpdated = characterOptional.get();
+//        characterUpdated.setName(character.getName());
+//        characterUpdated.setType(character.getType());
+//        characterUpdated.setLifepoints(character.getLifepoints());
+//        characterUpdated.setImage(character.getName()+"_0.jpg");
+//        System.out.println(character);
+        Character characterUpdated = characterDao.save(character);
 
-        if(!characterOptional.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        Character characterUpdated = characterOptional.get();
-        characterUpdated.setName(character.getName());
-        characterUpdated.setType(character.getType());
-        characterUpdated.setLifepoints(character.getLifepoints());
-        characterUpdated.setImage(character.getName()+"_0.jpg");
-        System.out.println(character);
-        return character;
+        return characterUpdated;
     }
 
+    //Supprimer un personnage
     @DeleteMapping("/characters/{id}")
     public List <Character> deleteCharacter(@PathVariable int id) {
 //        Character character = listCharacter
@@ -85,20 +132,10 @@ public class CharacterController {
         if(character == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
-        characterDao.findAll().remove(character);
+        characterDao.deleteById(id);
         return characterDao.findAll();
     }
 
-    @GetMapping("/characters/{id}")
-    public Character displayACharacter(@PathVariable int id) {
-//        List<Character> characters = listCharacter
-//                .stream()
-//                .filter(x -> id == x.getId())
-//                .toList();
-        if(characterDao.findAll().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        return characterDao.findById(id);
-    }
+
 
 }
